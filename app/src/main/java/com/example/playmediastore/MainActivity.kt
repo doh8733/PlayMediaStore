@@ -1,8 +1,11 @@
 package com.example.playmediastore
 
 import android.annotation.SuppressLint
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -28,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-//    fun init(){
+    //    fun init(){
 //        mediaPlayer = MediaPlayer.create(this, R.raw.song)
 //        val context = this.baseContext
 //        audioManager = context.getSystemService(AUDIO_SERVICE) as AudioManager
@@ -45,27 +48,46 @@ class MainActivity : AppCompatActivity() {
             mediaPlayer.pause()
         }
     }
+
     private fun switch() {
-        if (!isPlayOnSpeaker){
+        if (!isPlayOnSpeaker) {
             isPlayOnSpeaker = true
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
             audioManager.isSpeakerphoneOn = true
-        }
-        else{
+        } else {
             isPlayOnSpeaker = false
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            mediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
             audioManager.isSpeakerphoneOn = false
         }
     }
-    fun playNow(){
-        mediaPlayer = MediaPlayer.create(this, R.raw.song)
+
+    fun playNow() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(
+                applicationContext,
+                Uri.parse("android.resource://" + packageName + "/" + R.raw.song)
+            )
+            val audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                .build()
+            mediaPlayer.setAudioAttributes(audioAttributes)
+            mediaPlayer.prepare()
+        }
+        else{
+            mediaPlayer = MediaPlayer.create(this, R.raw.song)
+        }
         mediaPlayer.start()
         val context = this.baseContext
         isPlayOnSpeaker = true
         audioManager = context.getSystemService(AUDIO_SERVICE) as AudioManager
-        audioManager.mode = AudioManager.MODE_IN_CALL
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_VOICE_CALL);
+        audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
         audioManager.isSpeakerphoneOn = false
-        audioManager.setStreamVolume(AudioManager.STREAM_VOICE_CALL,audioManager.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL),0)
+
 
     }
 }
